@@ -21,9 +21,12 @@ class WordsImport implements ToModel
     */
     public function model(array $row)
     {
-        return new Word([
-            'word'     => $row[0],
-            'list_id'  => $this->list_id,
-        ]);
+        if (!empty($row[0])) {
+            return new Word([
+                'word'     => $row[0],
+                'list_id'  => $this->list_id,
+            ]);
+        }
     }
+
 }
