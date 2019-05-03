@@ -43,10 +43,15 @@
         .table {
             margin: 25px;
         }
-        .table  td {
+        .table  td,
+        .cell {
             color: rgba(9, 9, 9, 1);
             padding: 2px 15px;
             background-color: rgba(200, 243, 237, 0.47);
+        }
+        .cell {
+            padding: 3px;
+            margin: 2px;
         }
         .table  th {
             padding: 2px 15px;
@@ -108,33 +113,18 @@
         <a href="javascript:;" id="fn_sorting" class="download_link">Группировать</a>
     </div>
     <div class="hide" id="fn_top_phrases">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>TOP1 with TOP2</th>
-                    <th>TOP1</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($top1with2_phrases_to_export as $keyWord)
-                    <tr>
-                        @if (isset($keyWord[0]))
-                            <td>{{ $keyWord[0] }}</td>
-                        @else
-                            <td></td>
-                        @endif
-                        @if (isset($keyWord[1]))
-                            <td>{{ $keyWord[1] }}</td>
-                        @else
-                            <td></td>
-                        @endif
-                    </tr>
+    <div style="width: 1000px; margin: 20px 40px;">
+        @foreach ($top1with2_phrases_to_export as $keyWords)
+            <div style="width: 245px; display: inline-block; vertical-align: top;">
+                @foreach ($keyWords as $keyWord)
+                    <p class="cell">{{ $keyWord }}</p>
                 @endforeach
-            </tbody>
-        </table>
-        <div class="fn_b_sorting">
-            <a id="fn_download_file" class="download_link" href="/list/{{ $list_id }}">Сохранить</a>
-        </div>
+            </div>
+        @endforeach
+    </div>
+    <div class="fn_b_sorting">
+        <a id="fn_download_file" class="download_link" href="/list/{{ $list_id }}">Сохранить</a>
+    </div>
     </div>
 @endif
 

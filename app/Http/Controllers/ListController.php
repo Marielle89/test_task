@@ -14,6 +14,8 @@ use App\WordsList;
 
 class ListController extends Controller
 {
+    private $numberTopWord = 5; /*** количество частовстерчаемых слов ***/
+    private $depthTop = 4;
     public function index()
     {
         return view('list');
@@ -40,7 +42,7 @@ class ListController extends Controller
             if ($wordsList->id) {
                 self::import($file, $wordsList->id);
                 $data = self::createTop($wordsList->id);
-                return view('list', ['list_id' => $wordsList->id, 'keyWords' => $data['keyWords'], 'top5_words' => $data['top5_words'], 'top1with2_phrases_to_export' => $data['top1with2_phrases_to_export']]);
+                return view('list', ['list_id' => $wordsList->id, 'keyWords' => $data['keyWords'], 'top5_words' => $data['top5_words'], 'top1with2_phrases_to_export' => $data['top1with2_phrases']]);
             } else {
                 $error = "Файл имеет не корректное название";
             }
@@ -72,32 +74,46 @@ class ListController extends Controller
             }
         }
         array_multisort(array_map('count', $topWords), SORT_DESC, $topWords);
-        $top5 = array_slice($topWords, 0, 5, true);
-        $top5_words = array_keys($top5);
-        $top1_phrases = $top5[$top5_words[0]];
-        $top2_phrases = $top5[$top5_words[1]];
+        $top = array_slice($topWords, 0, $this->numberTopWord, true);
+        $top_words = array_keys($top);
 
-        $top1with2_phrases = array();
-        foreach ($top2_phrases as $phrase) {
-            $phrase_array = preg_split('/\s+/', $phrase);
-            if (in_array($top5_words[0], $phrase_array, true) && in_array($top5_words[1], $phrase_array, true)) {
-                $top1with2_phrases[] = $phrase;
+        if (count($top_words) >= count($this->depthTop)) {
+            $topWordsForPhrases = array_reverse(array_slice($top_words, 0, $this->depthTop));
+            $topWordsForPhrasesSlice = $topWordsForPhrases;
+        }
+        $allTopPhrases = array();
+        foreach ($topWordsForPhrases as $topWordsForPhrase) {
+            $allPhrasesCurrentLevel = $top[$topWordsForPhrase];
+            foreach ($allPhrasesCurrentLevel as $phrase) {
+                $phrase_array = preg_split('/\s+/', $phrase);
+                if (count(array_intersect($topWordsForPhrasesSlice, $phrase_array)) == count($topWordsForPhrasesSlice)) {
+                    $allTopPhrases[$topWordsForPhrase][] = $phrase;
+                }
+                $phrasePosition = array_search($topWordsForPhrase, $topWordsForPhrasesSlice);
+                unset($topWordsForPhrasesSlice[$phrasePosition]);
             }
         }
-        $top1with2_phrases_to_export = array();
-        foreach ($top1with2_phrases as $key => $top1with2_phrase) {
-            $top1with2_phrases_to_export[$key][0] = $top1with2_phrase;
-        }
+        $clear_array = array();
 
-        foreach ($top1_phrases as $key => $top1_phrase) {
-            $top1with2_phrases_to_export[$key][1] = $top1_phrase;
+        foreach ($allTopPhrases as $key => &$allTopPhrase) {
+            $allTopPhrase = array_diff($allTopPhrase, $clear_array);
+            $clear_array = array_merge($clear_array, $allTopPhrase);
         }
-
+        $allTopPhrasesTable = array();
+        $numberCell = 0;
+        foreach ($allTopPhrases as $key => $value) {
+            $row = 0;
+            foreach ($value as $cell) {
+                $allTopPhrasesTable[$row][$numberCell] = $cell;
+                $row++;
+            }
+            $numberCell++;
+        }
         $data = array();
         $data['keyWords'] = $keyWords;
-        $data['top5_words'] = $top5_words;
-        $data['top1with2_phrases_to_export'] = $top1with2_phrases_to_export;
-
+        $data['top5_words'] = $top_words;
+        $data['top1with2_phrases'] = $allTopPhrases;
+        $data['top1with2_phrases_to_export'] = $allTopPhrasesTable;
         return $data;
     }
 
